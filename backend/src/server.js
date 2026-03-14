@@ -22,13 +22,13 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
 const userRoutes = require('./routes/userRoutes');
+const bandRoutes = require('./routes/bandRoutes');
 
 // ================= ROUTES =================
 app.use('/api/auth', authRoutes); // กำหนดให้ API หมวด Auth เริ่มต้นด้วย /api/auth
-
 app.use('/api/posts', postRoutes);
-
 app.use('/api/users', userRoutes);
+app.use('/api/bands', bandRoutes);
 
 app.get('/api/health', (req, res) => {
   // ตอบกลับด้วย HTTP Status Codes ให้ถูกต้อง
