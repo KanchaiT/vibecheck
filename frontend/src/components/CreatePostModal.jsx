@@ -1,40 +1,38 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { X } from 'lucide-react';
 import api from '../services/api';
 
-// กำหนด Schema ป้องกันคนกรอกข้อมูลว่างเปล่า
-const postSchema = z.object({
-  bandName: z.string().min(1, "กรุณากรอกชื่อวง"),
-  roleNeeded: z.string().min(1, "กรุณาระบุตำแหน่งที่ต้องการ (เช่น Drummer)"),
-  tags: z.string().min(1, "กรุณาระบุแนวเพลง (คั่นด้วยลูกน้ำ เช่น Rock, Pop)"),
-});
-
 export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
-    resolver: zodResolver(postSchema)
+  // ดึง watch มาใช้เพื่อตรวจสอบค่าในฟอร์มแบบ Real-time
+  const { register, handleSubmit, watch, reset, formState: { isSubmitting } } = useForm({
+    defaultValues: {
+      postType: 'BandFinder' // ค่าเริ่มต้นเป็น Band Finder
+    }
   });
 
-  // ถ้า Modal ไม่ได้ถูกเปิดอยู่ ให้คืนค่า null (ไม่แสดงผลอะไรเลย)
+  const selectedPostType = watch('postType'); // เฝ้าดูว่าเลือกอะไรอยู่
+
   if (!isOpen) return null;
 
   const onSubmit = async (data) => {
     try {
-      // แปลงข้อความ tags เช่น "Rock, Pop, Jazz" ให้กลายเป็น Array ["Rock", "Pop", "Jazz"]
-      const tagsArray = data.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+      const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
 
-      // ยิง API สร้างโพสต์
+      // ยิง API พร้อมข้อมูลทั้งหมด
       await api.post('/posts', {
-        bandName: data.bandName,
+        postType: data.postType,
         roleNeeded: data.roleNeeded,
+        bandName: data.bandName,
+        title: data.title,
+        content: data.content,
+        imageUrl: data.imageUrl,
         tags: tagsArray
       });
 
-      reset(); // ล้างข้อมูลในฟอร์ม
-      onSuccess(); // เรียกฟังก์ชันโหลดหน้า Feed ใหม่ (ที่ส่งมาจาก VibeHub)
-      onClose(); // ปิด Modal
+      reset(); 
+      onSuccess(); 
+      onClose(); 
       
     } catch (error) {
       alert("เกิดข้อผิดพลาดในการสร้างโพสต์: " + (error.response?.data?.message || error.message));
@@ -42,58 +40,73 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    // พื้นหลังสีดำเบลอๆ (Glassmorphism Effect) [cite: 85, 86]
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 font-sans">
-      
-      {/* กล่อง Modal สไตล์ Brutalism */}
-      <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl w-full max-w-md overflow-hidden relative animate-in fade-in zoom-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-sans overflow-y-auto pt-20 pb-10">
+      <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in duration-200 my-auto">
         
-        <div className="flex justify-between items-center p-4 bg-black text-white border-b-4 border-black">
-          <h2 className="text-xl font-black uppercase tracking-widest text-yellow-400">Create Band Post</h2>
-          <button onClick={onClose} className="hover:text-red-400 transition">
-            <X size={24} />
-          </button>
+        <div className="flex justify-between items-center p-4 bg-black text-white border-b-4 border-black sticky top-0 z-10">
+          <h2 className="text-xl font-black uppercase tracking-widest text-yellow-400">Create Post</h2>
+          <button onClick={onClose} className="hover:text-red-400 transition"><X size={24} /></button>
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           
+          {/* ส่วนเลือกประเภทโพสต์ */}
           <div>
-            <label className="block text-sm font-black uppercase mb-1">Band Name</label>
-            <input 
-              {...register('bandName')} 
-              placeholder="e.g. THE STATIC NOISE"
-              className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:outline-none focus:ring-4 focus:ring-yellow-400 transition font-bold"
-            />
-            {errors.bandName && <p className="text-xs text-red-500 font-bold mt-1 uppercase">{errors.bandName.message}</p>}
+            <label className="block text-sm font-black uppercase mb-2">Post Type</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 font-bold cursor-pointer">
+                <input type="radio" value="BandFinder" {...register('postType')} className="w-4 h-4 text-black focus:ring-black" />
+                Band Finder 🎸
+              </label>
+              <label className="flex items-center gap-2 font-bold cursor-pointer">
+                <input type="radio" value="Knowledge" {...register('postType')} className="w-4 h-4 text-black focus:ring-black" />
+                Knowledge 📚
+              </label>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-black uppercase mb-1">Role Needed</label>
-            <input 
-              {...register('roleNeeded')} 
-              placeholder="e.g. BASSIST"
-              className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:outline-none focus:ring-4 focus:ring-yellow-400 transition font-bold"
-            />
-            {errors.roleNeeded && <p className="text-xs text-red-500 font-bold mt-1 uppercase">{errors.roleNeeded.message}</p>}
-          </div>
+          <hr className="border-t-2 border-dashed border-gray-300 my-4" />
 
+          {/* Conditional Rendering: โชว์ฟิลด์ตามประเภทที่เลือก */}
+          {selectedPostType === 'BandFinder' ? (
+            <>
+              <div>
+                <label className="block text-sm font-black uppercase mb-1">Band Name</label>
+                <input {...register('bandName')} placeholder="e.g. THE STATIC NOISE" className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+              </div>
+              <div>
+                <label className="block text-sm font-black uppercase mb-1">Role Needed</label>
+                <input {...register('roleNeeded')} placeholder="e.g. BASSIST" className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+              </div>
+            </>
+          ) : (
+            <>
+              <div>
+                <label className="block text-sm font-black uppercase mb-1">Title</label>
+                <input {...register('title')} placeholder="หัวข้อความรู้ เช่น เทคนิคปรับตู้แอมป์..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+              </div>
+              <div>
+                <label className="block text-sm font-black uppercase mb-1">Content</label>
+                <textarea {...register('content')} rows="4" placeholder="เนื้อหาความรู้ของคุณ..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold resize-none" />
+              </div>
+              <div>
+                <label className="block text-sm font-black uppercase mb-1">Image URL (Optional)</label>
+                <input {...register('imageUrl')} placeholder="https://..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+              </div>
+            </>
+          )}
+
+          {/* ใช้ร่วมกันทั้ง 2 ประเภท */}
           <div>
             <label className="block text-sm font-black uppercase mb-1">Vibe Tags (Comma separated)</label>
-            <input 
-              {...register('tags')} 
-              placeholder="e.g. ALT-ROCK, GRUNGE"
-              className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:outline-none focus:ring-4 focus:ring-yellow-400 transition font-bold"
-            />
-            {errors.tags && <p className="text-xs text-red-500 font-bold mt-1 uppercase">{errors.tags.message}</p>}
+            <input {...register('tags')} placeholder="e.g. ALT-ROCK, THEORY" className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
           </div>
 
-          <button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="w-full py-3 mt-4 text-lg font-black uppercase transition bg-yellow-400 border-4 border-black rounded-xl hover:bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none disabled:opacity-50"
-          >
-            {isSubmitting ? 'Posting...' : 'Post to VibeHub'}
-          </button>
+          <div className="pt-4 pb-2 sticky bottom-0 bg-white">
+            <button type="submit" disabled={isSubmitting} className="w-full py-3 text-lg font-black uppercase transition bg-yellow-400 border-4 border-black rounded-xl hover:bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none disabled:opacity-50">
+              {isSubmitting ? 'Posting...' : 'Post to VibeHub'}
+            </button>
+          </div>
         </form>
 
       </div>

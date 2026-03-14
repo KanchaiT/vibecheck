@@ -16,17 +16,29 @@ const getPosts = async (req, res) => {
   }
 };
 
-// @desc    สร้างโพสต์ประกาศหาเพื่อนร่วมวง
+// @desc    สร้างโพสต์
 // @route   POST /api/posts
 // @access  Private
 const createPost = async (req, res) => {
   try {
-    const { roleNeeded, bandName, tags } = req.body;
+    const { postType, roleNeeded, bandName, title, content, imageUrl, tags } = req.body;
 
-    const post = await BandPost.create({
-      user: req.user._id, // เอา ID มาจาก Middleware protect
+    // ตรวจสอบความถูกต้องของข้อมูลตามประเภทโพสต์
+    if (postType === 'BandFinder' && (!roleNeeded || !bandName)) {
+      return res.status(400).json({ message: 'กรุณากรอกชื่อวงและตำแหน่งที่ต้องการให้ครบถ้วน' });
+    }
+    if (postType === 'Knowledge' && (!title || !content)) {
+      return res.status(400).json({ message: 'กรุณากรอกหัวข้อและเนื้อหาความรู้ให้ครบถ้วน' });
+    }
+
+    const post = await BandPost.create({ // ใช้ชื่อ Model ตามที่คุณ import ไว้ด้านบน
+      user: req.user._id,
+      postType: postType || 'BandFinder',
       roleNeeded,
       bandName,
+      title,
+      content,
+      imageUrl,
       tags
     });
 

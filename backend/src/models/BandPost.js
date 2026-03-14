@@ -1,27 +1,29 @@
-// backend/src/models/BandPost.js
 const mongoose = require('mongoose');
 
-const bandPostSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
-    ref: 'User', // เชื่อมความสัมพันธ์กับ User Collection (Function 4.3)
+    ref: 'User',
   },
-  roleNeeded: {
+  // 1. เพิ่มฟิลด์แยกประเภทโพสต์
+  postType: {
     type: String,
-    required: [true, 'กรุณาระบุตำแหน่งที่ต้องการหา (เช่น Bassist, Drummer)'],
+    enum: ['BandFinder', 'Knowledge'],
+    default: 'BandFinder'
   },
-  bandName: {
-    type: String,
-    required: [true, 'กรุณาระบุชื่อวง'],
-  },
-  tags: [{
-    type: String, // เช่น ["J-Rock", "Alt-Rock"]
-  }],
-  isDeleted: {
-    type: Boolean,
-    default: false, // Function 4.2: ระบบ Soft Delete (ซ่อนโพสต์แทนการลบจริง)
-  }
+  // 2. ปลด required ออกจากของเดิม เพื่อให้ยืดหยุ่น
+  roleNeeded: { type: String },
+  bandName: { type: String },
+  
+  // 3. เพิ่มฟิลด์สำหรับ Knowledge Post
+  title: { type: String },
+  content: { type: String },
+  imageUrl: { type: String }, // เผื่อใส่ลิงก์รูปภาพประกอบ
+  
+  tags: [{ type: String }],
+  isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
-module.exports = mongoose.model('BandPost', bandPostSchema);
+// เปลี่ยนชื่อ Model เป็น Post ให้ครอบคลุมขึ้น (หรือจะใช้ชื่อเดิมก็ได้ครับ)
+module.exports = mongoose.model('Post', postSchema);
