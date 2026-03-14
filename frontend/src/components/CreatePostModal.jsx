@@ -57,15 +57,11 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess, editData }
 
       // 👈 เช็คว่าเป็นการ "อัปเดต" หรือ "สร้างใหม่"
       if (editData) {
-        // โหมดแก้ไข: ยิงแบบ PUT ไปที่ /posts/:id
-        await api.put(`/posts/${editData._id}`, formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        // โหมดแก้ไข: ปล่อยให้ axios จัดการ header ให้เอง
+        await api.put(`/posts/${editData._id}`, formData);
       } else {
-        // โหมดสร้างใหม่: ยิงแบบ POST เหมือนเดิม
-        await api.post('/posts', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
+        // โหมดสร้างใหม่: ปล่อยให้ axios จัดการ header ให้เอง
+        await api.post('/posts', formData);
       }
 
       reset(); 

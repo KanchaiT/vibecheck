@@ -3,15 +3,18 @@ const router = express.Router();
 const { getPosts, createPost, deletePost, updatePost, toggleLike, addComment } = require('../controllers/postController');
 const { protect } = require('../middlewares/authMiddleware');
 
-// 🚨 จุดสำคัญ: ต้อง import อุปกรณ์อัปโหลดมาด้วย
+// 🚨 นำเข้าตัวอัปโหลด
 const upload = require('../config/cloudinary'); 
 
-// 🚨 สังเกตตรง .post() ต้องมี upload.single('mediaFile') แทรกอยู่ตรงกลาง
-router.route('/').get(protect, getPosts).post(protect, upload.single('mediaFile'), createPost);
+// 🚨 จุดสำคัญ 1: ตรง .post() ต้องมี upload.single('mediaFile') แทรกอยู่
+router.route('/')
+  .get(protect, getPosts)
+  .post(protect, upload.single('mediaFile'), createPost);
 
+// 🚨 จุดสำคัญ 2: ตรง .put() ก็ต้องมี upload.single('mediaFile') แทรกอยู่เหมือนกัน
 router.route('/:id')
-    .delete(protect, deletePost)
-    .put(protect, upload.single('mediaFile'), updatePost);
+  .delete(protect, deletePost)
+  .put(protect, upload.single('mediaFile'), updatePost);
 
 router.route('/:id/like').put(protect, toggleLike);
 router.route('/:id/comment').post(protect, addComment);
