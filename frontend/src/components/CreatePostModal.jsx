@@ -4,14 +4,13 @@ import { X } from 'lucide-react';
 import api from '../services/api';
 
 export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
-  // ดึง watch มาใช้เพื่อตรวจสอบค่าในฟอร์มแบบ Real-time
   const { register, handleSubmit, watch, reset, formState: { isSubmitting } } = useForm({
     defaultValues: {
-      postType: 'BandFinder' // ค่าเริ่มต้นเป็น Band Finder
+      postType: 'BandFinder' 
     }
   });
 
-  const selectedPostType = watch('postType'); // เฝ้าดูว่าเลือกอะไรอยู่
+  const selectedPostType = watch('postType');
 
   if (!isOpen) return null;
 
@@ -19,7 +18,6 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
     try {
       const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
 
-      // ยิง API พร้อมข้อมูลทั้งหมด
       await api.post('/posts', {
         postType: data.postType,
         roleNeeded: data.roleNeeded,
@@ -50,16 +48,18 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
 
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
           
-          {/* ส่วนเลือกประเภทโพสต์ */}
+          {/* ========================================== */}
+          {/* ตรงนี้แหละครับคือจุดเลือกว่าจะเป็นโพสต์แบบไหน */}
+          {/* ========================================== */}
           <div>
             <label className="block text-sm font-black uppercase mb-2">Post Type</label>
             <div className="flex gap-4">
               <label className="flex items-center gap-2 font-bold cursor-pointer">
-                <input type="radio" value="BandFinder" {...register('postType')} className="w-4 h-4 text-black focus:ring-black" />
+                <input type="radio" value="BandFinder" {...register('postType')} className="w-4 h-4 text-black focus:ring-black accent-black" />
                 Band Finder 🎸
               </label>
               <label className="flex items-center gap-2 font-bold cursor-pointer">
-                <input type="radio" value="Knowledge" {...register('postType')} className="w-4 h-4 text-black focus:ring-black" />
+                <input type="radio" value="Knowledge" {...register('postType')} className="w-4 h-4 text-black focus:ring-black accent-black" />
                 Knowledge 📚
               </label>
             </div>
@@ -67,7 +67,6 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
 
           <hr className="border-t-2 border-dashed border-gray-300 my-4" />
 
-          {/* Conditional Rendering: โชว์ฟิลด์ตามประเภทที่เลือก */}
           {selectedPostType === 'BandFinder' ? (
             <>
               <div>
@@ -91,12 +90,11 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
               </div>
               <div>
                 <label className="block text-sm font-black uppercase mb-1">Image URL (Optional)</label>
-                <input {...register('imageUrl')} placeholder="https://..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+                <input {...register('imageUrl')} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
               </div>
             </>
           )}
 
-          {/* ใช้ร่วมกันทั้ง 2 ประเภท */}
           <div>
             <label className="block text-sm font-black uppercase mb-1">Vibe Tags (Comma separated)</label>
             <input {...register('tags')} placeholder="e.g. ALT-ROCK, THEORY" className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
