@@ -19,8 +19,9 @@ const postSchema = new mongoose.Schema({
   // 3. เพิ่มฟิลด์สำหรับ Knowledge Post
   title: { type: String },
   content: { type: String },
-  imageUrl: { type: String }, // เผื่อใส่ลิงก์รูปภาพประกอบ
-  
+  mediaUrl: { type: String }, // เผื่อใส่ลิงก์รูปภาพประกอบ
+  mediaType: { type: String },
+
   tags: [{ type: String }],
   isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });

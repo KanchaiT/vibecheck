@@ -16,22 +16,34 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
 
   const onSubmit = async (data) => {
     try {
-      const tagsArray = data.tags ? data.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== "") : [];
+      // 1. ต้องใช้ FormData ห่อข้อมูล
+      const formData = new FormData();
+      formData.append('postType', data.postType);
+      formData.append('tags', data.tags || "");
 
-      await api.post('/posts', {
-        postType: data.postType,
-        roleNeeded: data.roleNeeded,
-        bandName: data.bandName,
-        title: data.title,
-        content: data.content,
-        imageUrl: data.imageUrl,
-        tags: tagsArray
+      if (data.postType === 'BandFinder') {
+        formData.append('bandName', data.bandName || "");
+        formData.append('roleNeeded', data.roleNeeded || "");
+      } else {
+        formData.append('title', data.title || "");
+        formData.append('content', data.content || "");
+        
+        // 🚨 จุดสำคัญ: แนบไฟล์รูป/วิดีโอ (ถ้ามี)
+        if (data.mediaFile && data.mediaFile.length > 0) {
+          formData.append('mediaFile', data.mediaFile[0]); 
+        }
+      }
+
+      // 2. ส่ง formData ไปที่ API (ห้ามส่งเป็น JSON)
+      await api.post('/posts', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
 
       reset(); 
       onSuccess(); 
       onClose(); 
-      
     } catch (error) {
       alert("เกิดข้อผิดพลาดในการสร้างโพสต์: " + (error.response?.data?.message || error.message));
     }
@@ -82,15 +94,21 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
             <>
               <div>
                 <label className="block text-sm font-black uppercase mb-1">Title</label>
-                <input {...register('title')} placeholder="หัวข้อความรู้ เช่น เทคนิคปรับตู้แอมป์..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+                <input {...register('title')} placeholder="หัวข้อความรู้..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
               </div>
               <div>
                 <label className="block text-sm font-black uppercase mb-1">Content</label>
                 <textarea {...register('content')} rows="4" placeholder="เนื้อหาความรู้ของคุณ..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold resize-none" />
               </div>
               <div>
-                <label className="block text-sm font-black uppercase mb-1">Image URL (Optional)</label>
-                <input {...register('imageUrl')} placeholder="https://images.unsplash.com/..." className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:ring-4 focus:ring-yellow-400 font-bold" />
+                {/* 👈 เปลี่ยนจาก Text Input เป็น File Input */}
+                <label className="block text-sm font-black uppercase mb-1">Upload Media (Image or MP4)</label>
+                <input 
+                  type="file" 
+                  accept="image/*,video/mp4" 
+                  {...register('mediaFile')} 
+                  className="w-full px-3 py-2 bg-gray-100 border-2 border-black rounded-lg focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-2 file:border-black file:text-sm file:font-bold file:bg-yellow-400 file:text-black hover:file:bg-yellow-300 transition" 
+                />
               </div>
             </>
           )}

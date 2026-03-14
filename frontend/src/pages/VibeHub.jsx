@@ -118,7 +118,8 @@ export default function VibeHub() {
                   postId={post._id}
                   title={post.title}
                   content={post.content}
-                  imageUrl={post.imageUrl}
+                  mediaUrl={post.mediaUrl}   // ✅ เปลี่ยนเป็นสื่อแบบใหม่
+                  mediaType={post.mediaType} // ✅ ส่งประเภทไปด้วย (image/video)
                   tags={post.tags}
                   author={post.user?.username}
                   postOwnerId={post.user?._id}

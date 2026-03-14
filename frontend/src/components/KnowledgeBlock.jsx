@@ -1,7 +1,7 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 
-export default function KnowledgeBlock({ postId, title, content, imageUrl, tags, author, postOwnerId, currentUser, onDelete }) {
+export default function KnowledgeBlock({ postId, title, content, mediaUrl, mediaType, tags, author, postOwnerId, currentUser, onDelete }) {
   const isOwner = currentUser?._id === postOwnerId;
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
@@ -20,11 +20,28 @@ export default function KnowledgeBlock({ postId, title, content, imageUrl, tags,
         </div>
       </div>
       
-      {imageUrl && (
-        <div className="w-full h-48 border-b-4 border-black">
-          <img src={imageUrl} alt={title} className="w-full h-full object-cover" />
+      {/* ========================================== */}
+      {/* ส่วนที่แก้ใหม่: แยกโชว์รูปภาพ กับ โชว์วิดีโอ */}
+      {/* ========================================== */}
+      
+      {/* 1. ถ้าเป็นวิดีโอ ให้โชว์ Video Player */}
+      {mediaUrl && mediaType === 'video' && (
+        <div className="w-full border-b-4 border-black bg-black">
+          <video controls className="w-full max-h-96 object-contain">
+            <source src={mediaUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       )}
+
+      {/* 2. ถ้าเป็นรูปภาพ ให้โชว์ Image ตามปกติ */}
+      {mediaUrl && mediaType === 'image' && (
+        <div className="w-full h-64 border-b-4 border-black">
+          <img src={mediaUrl} alt={title} className="w-full h-full object-cover" />
+        </div>
+      )}
+      
+      {/* ========================================== */}
 
       <div className="p-5">
         <h2 className="mb-3 text-2xl font-black uppercase text-black">{title}</h2>

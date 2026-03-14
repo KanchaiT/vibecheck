@@ -1,12 +1,14 @@
 const express = require('express');
 const router = express.Router();
-// นำเข้า deletePost เพิ่มเข้ามา
 const { getPosts, createPost, deletePost } = require('../controllers/postController');
 const { protect } = require('../middlewares/authMiddleware');
 
-router.route('/').get(protect, getPosts).post(protect, createPost);
+// 🚨 จุดสำคัญ: ต้อง import อุปกรณ์อัปโหลดมาด้วย
+const upload = require('../config/cloudinary'); 
 
-// เพิ่ม Route สำหรับลบโพสต์ (ต้องผ่าน protect ก่อน)
+// 🚨 สังเกตตรง .post() ต้องมี upload.single('mediaFile') แทรกอยู่ตรงกลาง
+router.route('/').get(protect, getPosts).post(protect, upload.single('mediaFile'), createPost);
+
 router.route('/:id').delete(protect, deletePost);
 
 module.exports = router;

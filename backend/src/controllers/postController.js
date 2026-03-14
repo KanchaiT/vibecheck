@@ -19,27 +19,37 @@ const getPosts = async (req, res) => {
 // @desc    สร้างโพสต์
 // @route   POST /api/posts
 // @access  Private
+// ในฟังก์ชัน createPost...
 const createPost = async (req, res) => {
   try {
-    const { postType, roleNeeded, bandName, title, content, imageUrl, tags } = req.body;
 
-    // ตรวจสอบความถูกต้องของข้อมูลตามประเภทโพสต์
-    if (postType === 'BandFinder' && (!roleNeeded || !bandName)) {
-      return res.status(400).json({ message: 'กรุณากรอกชื่อวงและตำแหน่งที่ต้องการให้ครบถ้วน' });
-    }
-    if (postType === 'Knowledge' && (!title || !content)) {
-      return res.status(400).json({ message: 'กรุณากรอกหัวข้อและเนื้อหาความรู้ให้ครบถ้วน' });
+    console.log("🔥 ข้อมูลตัวหนังสือ:", req.body);
+    console.log("📸 ไฟล์รูป/วิดีโอ:", req.file);
+      
+    const { postType, roleNeeded, bandName, title, content, tags } = req.body;
+    
+    // 👈 ตรวจสอบว่ามีการอัปโหลดไฟล์มาหรือไม่
+    let mediaUrl = "";
+    let mediaType = "";
+    
+    if (req.file) {
+      mediaUrl = req.file.path;
+      mediaType = req.file.mimetype.startsWith('video') ? 'video' : 'image'; 
     }
 
-    const post = await BandPost.create({ // ใช้ชื่อ Model ตามที่คุณ import ไว้ด้านบน
+    const parsedTags = tags ? tags.split(',').map(tag => tag.trim()) : [];
+
+    // 2. สั่งเซฟลง Database
+    const post = await BandPost.create({
       user: req.user._id,
       postType: postType || 'BandFinder',
       roleNeeded,
       bandName,
       title,
       content,
-      imageUrl,
-      tags
+      mediaUrl: mediaUrl,   // 👈 เช็คตรงนี้! ลืมใส่ 2 บรรทัดนี้หรือเปล่าครับ?
+      mediaType: mediaType, // 👈 เช็คตรงนี้!
+      tags: parsedTags
     });
 
     res.status(201).json(post);
