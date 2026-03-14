@@ -10,6 +10,7 @@ export default function VibeHub() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState(null);
 
   const currentUser = useAuthStore((state) => state.user);
 
@@ -125,6 +126,10 @@ export default function VibeHub() {
                   postOwnerId={post.user?._id}
                   currentUser={currentUser}
                   onDelete={handleDeletePost}
+                  onEdit={() => {
+                    setEditingPost(post);
+                    setIsModalOpen(true);
+                  }}
                 />
               ))
             )}
@@ -134,8 +139,12 @@ export default function VibeHub() {
 
       <CreatePostModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        onClose={() => { 
+          setIsModalOpen(false); 
+          setEditingPost(null); // ปิดแล้วต้องเคลียร์ค่าด้วย
+        }} 
         onSuccess={fetchPosts} 
+        editData={editingPost} // 👈 ส่งข้อมูลไปให้ Modal
       />
 
     </div>

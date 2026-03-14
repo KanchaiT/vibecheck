@@ -1,22 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react'; // 👈 นำเข้า useEffect
 import { useForm } from 'react-hook-form';
 import { X } from 'lucide-react';
 import api from '../services/api';
 
-export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
+// 👈 รับ Props editData เพิ่มเข้ามา
+export default function CreatePostModal({ isOpen, onClose, onSuccess, editData }) {
   const { register, handleSubmit, watch, reset, formState: { isSubmitting } } = useForm({
-    defaultValues: {
-      postType: 'BandFinder' 
-    }
+    defaultValues: { postType: 'BandFinder' }
   });
 
   const selectedPostType = watch('postType');
+
+  // ==========================================
+  // ใช้ useEffect เติมข้อมูลเก่าลงฟอร์ม ถ้าอยู่ใน "โหมดแก้ไข"
+  // ==========================================
+  useEffect(() => {
+    if (editData) {
+      // โหมดแก้ไข: เอาข้อมูลเก่ามาเซ็ตเป็นค่าเริ่มต้น
+      reset({
+        postType: editData.postType || 'BandFinder',
+        bandName: editData.bandName || "",
+        roleNeeded: editData.roleNeeded || "",
+        title: editData.title || "",
+        content: editData.content || "",
+        tags: editData.tags ? editData.tags.join(', ') : ""
+      });
+    } else {
+      // โหมดสร้างใหม่: ล้างค่าฟอร์มให้สะอาด
+      reset({
+        postType: 'BandFinder',
+        bandName: '', roleNeeded: '', title: '', content: '', tags: ''
+      });
+    }
+  }, [editData, isOpen, reset]);
 
   if (!isOpen) return null;
 
   const onSubmit = async (data) => {
     try {
-      // 1. ต้องใช้ FormData ห่อข้อมูล
       const formData = new FormData();
       formData.append('postType', data.postType);
       formData.append('tags', data.tags || "");
@@ -28,33 +49,43 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
         formData.append('title', data.title || "");
         formData.append('content', data.content || "");
         
-        // 🚨 จุดสำคัญ: แนบไฟล์รูป/วิดีโอ (ถ้ามี)
+        // แนบไฟล์ใหม่ (ถ้ามีการเลือกไฟล์ใหม่)
         if (data.mediaFile && data.mediaFile.length > 0) {
           formData.append('mediaFile', data.mediaFile[0]); 
         }
       }
 
-      // 2. ส่ง formData ไปที่ API (ห้ามส่งเป็น JSON)
-      await api.post('/posts', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      // 👈 เช็คว่าเป็นการ "อัปเดต" หรือ "สร้างใหม่"
+      if (editData) {
+        // โหมดแก้ไข: ยิงแบบ PUT ไปที่ /posts/:id
+        await api.put(`/posts/${editData._id}`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else {
+        // โหมดสร้างใหม่: ยิงแบบ POST เหมือนเดิม
+        await api.post('/posts', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      }
 
       reset(); 
       onSuccess(); 
       onClose(); 
     } catch (error) {
-      alert("เกิดข้อผิดพลาดในการสร้างโพสต์: " + (error.response?.data?.message || error.message));
+      alert("เกิดข้อผิดพลาด: " + (error.response?.data?.message || error.message));
     }
   };
+
+  // 👈 เปลี่ยนข้อความบนปุ่ม และหัวข้อ Modal ให้สอดคล้องกับโหมด
+  const modalTitle = editData ? "Edit Post" : "Create Post";
+  const buttonText = editData ? "Update Post" : "Post to VibeHub";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-sans overflow-y-auto pt-20 pb-10">
       <div className="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl w-full max-w-md overflow-hidden relative animate-in zoom-in duration-200 my-auto">
         
         <div className="flex justify-between items-center p-4 bg-black text-white border-b-4 border-black sticky top-0 z-10">
-          <h2 className="text-xl font-black uppercase tracking-widest text-yellow-400">Create Post</h2>
+          <h2 className="text-xl font-black uppercase tracking-widest text-yellow-400">{modalTitle}</h2>
           <button onClick={onClose} className="hover:text-red-400 transition"><X size={24} /></button>
         </div>
 
@@ -120,11 +151,10 @@ export default function CreatePostModal({ isOpen, onClose, onSuccess }) {
 
           <div className="pt-4 pb-2 sticky bottom-0 bg-white">
             <button type="submit" disabled={isSubmitting} className="w-full py-3 text-lg font-black uppercase transition bg-yellow-400 border-4 border-black rounded-xl hover:bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none disabled:opacity-50">
-              {isSubmitting ? 'Posting...' : 'Post to VibeHub'}
+              {isSubmitting ? 'Processing...' : buttonText}
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );

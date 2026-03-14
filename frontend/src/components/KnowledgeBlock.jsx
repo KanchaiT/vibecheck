@@ -1,7 +1,7 @@
 import React from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Edit } from 'lucide-react';
 
-export default function KnowledgeBlock({ postId, title, content, mediaUrl, mediaType, tags, author, postOwnerId, currentUser, onDelete }) {
+export default function KnowledgeBlock({ postId, title, content, mediaUrl, mediaType, tags, author, postOwnerId, currentUser, onDelete, onEdit }) {
   const isOwner = currentUser?._id === postOwnerId;
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
@@ -13,9 +13,14 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
         <div className="flex items-center gap-3 overflow-hidden">
           <span className="text-sm font-bold text-gray-400 truncate">SHARED BY: {author || "UNKNOWN"}</span>
           {canDelete && (
-            <button onClick={() => onDelete(postId)} className="p-2 text-white transition bg-red-500 border-2 border-black rounded-lg hover:bg-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none shrink-0" title="ลบโพสต์นี้">
-              <Trash2 size={18} />
-            </button>
+            <div className="flex gap-2">
+              <button onClick={onEdit} className="p-2 text-white transition bg-blue-500 border-2 border-black rounded-lg hover:bg-blue-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none shrink-0" title="แก้ไขโพสต์">
+                <Edit size={18} />
+              </button>
+              <button onClick={() => onDelete(postId)} className="p-2 text-white transition bg-red-500 border-2 border-black rounded-lg hover:bg-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none shrink-0" title="ลบโพสต์นี้">
+                <Trash2 size={18} />
+              </button>
+            </div>
           )}
         </div>
       </div>

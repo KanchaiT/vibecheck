@@ -58,6 +58,51 @@ const createPost = async (req, res) => {
   }
 };
 
+// @desc    แก้ไขโพสต์
+// @route   PUT /api/posts/:id
+// @access  Private
+const updatePost = async (req, res) => {
+  try {
+    const post = await BandPost.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'ไม่พบโพสต์นี้' });
+
+    // เช็คสิทธิ์: ต้องเป็นเจ้าของโพสต์ หรือ Admin ถึงจะแก้ได้
+    if (post.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'คุณไม่มีสิทธิ์แก้ไขโพสต์นี้' });
+    }
+
+    const { postType, roleNeeded, bandName, title, content, tags } = req.body;
+
+    // อัปเดตข้อมูลตัวหนังสือ
+    post.postType = postType || post.postType;
+    if (postType === 'BandFinder') {
+      post.roleNeeded = roleNeeded;
+      post.bandName = bandName;
+    } else {
+      post.title = title;
+      post.content = content;
+    }
+
+    // อัปเดต Tags
+    if (tags) {
+      post.tags = tags.split(',').map(tag => tag.trim()).filter(tag => tag !== "");
+    } else {
+      post.tags = [];
+    }
+
+    // ถ้ามีการอัปโหลดไฟล์ "ใหม่" เข้ามา ให้เปลี่ยนลิงก์ (ถ้าไม่มี ก็ใช้รูปเดิม)
+    if (req.file) {
+      post.mediaUrl = req.file.path;
+      post.mediaType = req.file.mimetype.startsWith('video') ? 'video' : 'image';
+    }
+
+    const updatedPost = await post.save();
+    res.json(updatedPost);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 // @desc    ลบโพสต์ (Soft Delete)
 // @route   DELETE /api/posts/:id
 // @access  Private
@@ -87,4 +132,4 @@ const deletePost = async (req, res) => {
   }
 };
 
-module.exports = { getPosts, createPost, deletePost };
+module.exports = { getPosts, createPost, deletePost, updatePost };
