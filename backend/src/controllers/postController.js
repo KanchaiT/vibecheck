@@ -6,16 +6,15 @@ const BandPost = require('../models/BandPost');
 // @access  Private
 const getPosts = async (req, res) => {
   try {
-    // หาโพสต์ที่ isDeleted เป็น false และดึงข้อมูล username ของคนโพสต์มาด้วย
     const posts = await BandPost.find({ isDeleted: false })
-                                .populate('user', 'username profilePicture')
-                                .sort({ createdAt: -1 }); // เรียงจากใหม่ไปเก่า
-    res.status(200).json(posts);
+      .populate('user', 'username displayName')
+      .populate('comments.user', 'username displayName') // 👈 เพิ่มบรรทัดนี้!
+      .sort({ createdAt: -1 });
+    res.json(posts);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-
 // @desc    สร้างโพสต์
 // @route   POST /api/posts
 // @access  Private
@@ -132,4 +131,46 @@ const deletePost = async (req, res) => {
   }
 };
 
-module.exports = { getPosts, createPost, deletePost, updatePost };
+// @desc    กด Like / ยกเลิก Like
+// @route   PUT /api/posts/:id/like
+const toggleLike = async (req, res) => {
+  try {
+    const post = await BandPost.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'ไม่พบโพสต์' });
+
+    // เช็คว่าเคยไลก์หรือยัง
+    const index = post.likes.indexOf(req.user._id);
+    if (index === -1) {
+      post.likes.push(req.user._id); // ยังไม่เคยไลก์ -> กดไลก์
+    } else {
+      post.likes.splice(index, 1); // เคยไลก์แล้ว -> ยกเลิกไลก์ (Unlike)
+    }
+
+    await post.save();
+    res.json(post.likes);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// @desc    เพิ่มคอมเมนต์
+// @route   POST /api/posts/:id/comment
+const addComment = async (req, res) => {
+  try {
+    const post = await BandPost.findById(req.params.id);
+    if (!post) return res.status(404).json({ message: 'ไม่พบโพสต์' });
+
+    const newComment = { user: req.user._id, text: req.body.text };
+    post.comments.push(newComment);
+    
+    await post.save();
+    // ดึงข้อมูลชื่อคนคอมเมนต์กลับไปให้หน้าบ้านด้วย
+    await post.populate('comments.user', 'username displayName');
+    
+    res.json(post.comments);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+module.exports = { getPosts, createPost, deletePost, updatePost, toggleLike, addComment };

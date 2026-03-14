@@ -23,7 +23,15 @@ const postSchema = new mongoose.Schema({
   mediaType: { type: String },
 
   tags: [{ type: String }],
-  isDeleted: { type: Boolean, default: false }
+  isDeleted: { type: Boolean, default: false },
+  likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // เก็บ ID คนกดไลก์
+  comments: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      text: { type: String, required: true },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ]
 }, { timestamps: true });
 
 // เปลี่ยนชื่อ Model เป็น Post ให้ครอบคลุมขึ้น (หรือจะใช้ชื่อเดิมก็ได้ครับ)

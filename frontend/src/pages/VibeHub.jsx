@@ -98,7 +98,13 @@ export default function VibeHub() {
                   author={post.user?.username}
                   postOwnerId={post.user?._id} 
                   currentUser={currentUser} 
-                  onDelete={handleDeletePost} 
+                  onDelete={handleDeletePost}
+                  initialLikes={post.likes || []}
+                  initialComments={post.comments || []}
+                  onEdit={() => {        
+                    setEditingPost(post);
+                    setIsModalOpen(true);
+                  }}
                 />
               ))
             )}
