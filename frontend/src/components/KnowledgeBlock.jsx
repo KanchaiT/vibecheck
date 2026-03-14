@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // 👈 เติม useEffect
 import { Trash2, Edit, Heart, MessageCircle, Send } from 'lucide-react';
 import api from '../services/api';
 
@@ -9,6 +9,9 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
   const [comments, setComments] = useState(initialComments);
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
+
+  useEffect(() => { setLikes(initialLikes); }, [initialLikes]);
+  useEffect(() => { setComments(initialComments); }, [initialComments]);
 
   const isOwner = currentUser?._id === postOwnerId;
   const isAdmin = currentUser?.role === 'admin';
