@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'; // 👈 เติม useEffect
+import React, { useState, useEffect } from 'react'; // 👈 อย่าลืม import useEffect
 import { Trash2, Edit, Heart, MessageCircle, Send } from 'lucide-react';
 import api from '../services/api';
 
-// 👈 รับ props initialLikes และ initialComments เพิ่มมา
+// รับ Props ตามปกติ
 export default function KnowledgeBlock({ postId, title, content, mediaUrl, mediaType, tags, author, postOwnerId, currentUser, onDelete, onEdit, initialLikes = [], initialComments = [] }) {
   
   const [likes, setLikes] = useState(initialLikes);
@@ -10,8 +10,16 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
 
-  useEffect(() => { setLikes(initialLikes); }, [initialLikes]);
-  useEffect(() => { setComments(initialComments); }, [initialComments]);
+  // ==========================================
+  // 🚨 ใส่ useEffect 2 ตัวนี้ เพื่อคอยจับตาดูว่าถ้า VibeHub ส่งข้อมูลมาใหม่ ให้รีบอัปเดตหน้าจอทันที
+  // ==========================================
+  useEffect(() => {
+    if (initialLikes) setLikes(initialLikes);
+  }, [initialLikes]);
+
+  useEffect(() => {
+    if (initialComments) setComments(initialComments);
+  }, [initialComments]);
 
   const isOwner = currentUser?._id === postOwnerId;
   const isAdmin = currentUser?.role === 'admin';

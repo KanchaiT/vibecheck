@@ -125,8 +125,8 @@ export default function VibeHub() {
                   postId={post._id}
                   title={post.title}
                   content={post.content}
-                  mediaUrl={post.mediaUrl}   // ✅ เปลี่ยนเป็นสื่อแบบใหม่
-                  mediaType={post.mediaType} // ✅ ส่งประเภทไปด้วย (image/video)
+                  mediaUrl={post.mediaUrl}
+                  mediaType={post.mediaType}
                   tags={post.tags}
                   author={post.user?.username}
                   postOwnerId={post.user?._id}
@@ -136,6 +136,9 @@ export default function VibeHub() {
                     setEditingPost(post);
                     setIsModalOpen(true);
                   }}
+                  // 🚨 เช็ค 2 บรรทัดนี้! ต้องมีคำว่า || [] เพื่อกันเหนียวด้วยครับ
+                  initialLikes={post.likes || []}       
+                  initialComments={post.comments || []} 
                 />
               ))
             )}
