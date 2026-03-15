@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom'; // 👈 นำเข้าตัวจัดการ URL
 import { useTheme } from '../context/ThemeContext';
 import BandFinderBlock from '../components/BandFinderBlock';
 import KnowledgeBlock from '../components/KnowledgeBlock';
 import CreatePostModal from '../components/CreatePostModal';
 import api from '../services/api';
-import { useAuthStore } from '../store/authStore'; 
+import { useAuthStore } from '../store/authStore';
+import { useSearchStore } from '../store/searchStore'; // 👈 นำเข้า Zustand Store สำหรับ Search
 
 export default function VibeHub() {
   const [posts, setPosts] = useState([]);
@@ -12,8 +14,24 @@ export default function VibeHub() {
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("ALL"); // 'ALL', 'BAND', 'KNOWLEDGE'
+  // ✅ แบบใหม่: ดึงแค่ Search มาจาก Zustand
+  const { searchQuery, setSearchQuery } = useSearchStore();
+
+// 🚨 เพิ่มชุดโค้ดสำหรับ URL Search Params
+  const [searchParams, setSearchParams] = useSearchParams();
+// อ่านค่าจาก URL (ถ้าไม่มีให้เป็น 'ALL')
+  const activeFilter = searchParams.get('filter') || 'ALL';
+
+// ฟังก์ชันสำหรับเปลี่ยน Filter บน URL
+  const handleFilterChange = (e) => {
+    const newValue = e.target.value;
+    if (newValue === 'ALL') {
+      searchParams.delete('filter'); // ถ้าเลือก ALL ให้ลบ param ออกให้ URL สะอาด
+      setSearchParams(searchParams);
+    } else {
+      setSearchParams({ filter: newValue }); // ถ้าเลือกอันอื่น ให้ใส่ ?filter=...
+    }
+  };
 
   const currentUser = useAuthStore((state) => state.user);
   console.log("ข้อมูลตัวฉันตอนนี้:", currentUser);
@@ -50,8 +68,8 @@ export default function VibeHub() {
   // 🚨 1. ระบบกรองข้อมูล (Search & Filter) ต้องทำก่อน!
   // ==========================================
   const filteredPosts = posts.filter(post => {
-    // กรองด้วยคำค้นหา
-    const searchLower = searchQuery.toLowerCase();
+    // กรองด้วยคำค้นหา (ถ้า searchQuery เป็น undefined ให้มองเป็น String ว่างๆ แทน)
+    const searchLower = (searchQuery || '').toLowerCase();
     const matchSearch = 
       (post.title && post.title.toLowerCase().includes(searchLower)) ||
       (post.bandName && post.bandName.toLowerCase().includes(searchLower)) ||
@@ -96,7 +114,7 @@ export default function VibeHub() {
         
         <select 
           value={activeFilter}
-          onChange={(e) => setActiveFilter(e.target.value)}
+          onChange={handleFilterChange} // 👈 เปลี่ยนมาเรียกใช้ฟังก์ชันนี้แทน
           className={`px-4 py-3 border-4 border-black rounded-xl font-black uppercase focus:ring-4 focus:ring-yellow-400 outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer transition ${
             config.theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
           }`}
