@@ -36,6 +36,13 @@ export const router = createBrowserRouter([
             path: "/profile",
             element: <ArtistProfile />,
           },
+          // ==========================================
+          // 🚨 เติมเส้นทางนี้เข้าไป เพื่อให้ดูโปรไฟล์คนอื่นได้!
+          // ==========================================
+          {
+            path: "/profile/:id",
+            element: <ArtistProfile />,
+          },
           {
             path: "/myband",
             element: <MyBand />,

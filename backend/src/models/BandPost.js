@@ -15,6 +15,7 @@ const postSchema = new mongoose.Schema({
   // 2. ปลด required ออกจากของเดิม เพื่อให้ยืดหยุ่น
   roleNeeded: { type: String },
   bandName: { type: String },
+  bandId: { type: mongoose.Schema.Types.ObjectId, ref: 'Band' },
   
   // 3. เพิ่มฟิลด์สำหรับ Knowledge Post
   title: { type: String },

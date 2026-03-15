@@ -60,11 +60,26 @@ exports.loginUser = async (req, res) => {
         _id: user._id,
         username: user.username,
         majorInstrument: user.majorInstrument,
+        role:user.role,
         token: generateToken(user._id)
       });
     } else {
       res.status(401).json({ message: 'Username หรือรหัสผ่านไม่ถูกต้อง' });
     }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    ดูข้อมูลโปรไฟล์คนอื่น
+// @route   GET /api/auth/users/:id
+exports.getUserProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password'); // ไม่ส่ง password กลับไป
+    if (!user) {
+      return res.status(404).json({ message: 'ไม่พบผู้ใช้งานนี้' });
+    }
+    res.json(user);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

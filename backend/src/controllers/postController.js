@@ -1,5 +1,6 @@
 // backend/src/controllers/postController.js
 const BandPost = require('../models/BandPost');
+const Band = require('../models/Band');
 
 // @desc    ดึงข้อมูลโพสต์หาเพื่อนร่วมวงทั้งหมด (ที่ไม่ถูก Soft Delete)
 // @route   GET /api/posts
@@ -51,7 +52,29 @@ const createPost = async (req, res) => {
       tags: parsedTags
     });
 
-    res.status(201).json(post);
+   if (postType === 'BandFinder' && bandName) {
+      // 1. ลองหาดูก่อน
+      let currentBand = await Band.findOne({ 
+        name: bandName, 
+        leader: req.user._id 
+      });
+
+      // 2. ถ้ายังไม่มี ให้สร้างใหม่
+      if (!currentBand) {
+        currentBand = await Band.create({
+          name: bandName,
+          leader: req.user._id,
+          members: [req.user._id] 
+        });
+        console.log(`🎉 สร้างวงใหม่สำเร็จ: ${bandName}`);
+      }
+
+      // 🚨 3. สำคัญมาก! เอา ID ของวงที่ได้ มาเซฟเก็บไว้ในโพสต์ด้วย!
+      post.bandId = currentBand._id;
+      await post.save();
+    }
+
+    res.status(201).json(post); 
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

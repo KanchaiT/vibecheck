@@ -1,11 +1,24 @@
-// backend/src/routes/bandRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getMyBand, leaveBand, createBand } = require('../controllers/bandController');
+// 🚨 อย่าลืม import 2 ฟังก์ชันใหม่เข้ามาด้วย
+const { getMyBands, getBandMessages, sendBandMessage, leaveBand, updateBand, removeMember, deleteBand, applyToBand, acceptMember, rejectMember } = require('../controllers/bandController');
 const { protect } = require('../middlewares/authMiddleware');
 
-router.route('/').post(protect, createBand); // เอาไว้สร้างวงใหม่
-router.route('/myband').get(protect, getMyBand); // เอาไว้ดึงข้อมูลวงของฉัน
-router.route('/leave').put(protect, leaveBand); // เอาไว้กดออกจากวง
+router.get('/my-bands', protect, getMyBands);
+router.put('/:bandId/leave', protect, leaveBand);
+
+router.put('/:bandId', protect, updateBand); // แก้ไขข้อมูลวง
+router.delete('/:bandId/members/:memberId', protect, removeMember); // เตะคน
+router.delete('/:bandId', protect, deleteBand); // ยุบวง
+
+// ==========================================
+// 🚨 เส้นทางสำหรับระบบแชท
+// ==========================================
+router.get('/:bandId/messages', protect, getBandMessages); // ดึงข้อความ
+router.post('/:bandId/messages', protect, sendBandMessage); // ส่งข้อความ
+
+router.post('/:bandId/apply', protect, applyToBand); // คนนอกกดขอเข้า
+router.put('/:bandId/accept/:userId', protect, acceptMember); // หัวหน้ากดรับ
+router.put('/:bandId/reject/:userId', protect, rejectMember); // หัวหน้ากดปัดตก
 
 module.exports = router;

@@ -1,11 +1,37 @@
-import React from 'react';
-import { Trash2, Edit } from 'lucide-react'; 
+import React, { useState } from 'react';
+import { Trash2, Edit, CheckCircle } from 'lucide-react'; 
+import api from '../services/api'; // 🚨 นำเข้าตัวยิง API
 
-export default function BandFinderBlock({ postId, role, bandName, tags, author, postOwnerId, currentUser, onDelete, onEdit}) {
+// 🚨 เพิ่ม bandId เข้ามาในวงเล็บรับค่า (Props)
+export default function BandFinderBlock({ postId, bandId, role, bandName, tags, author, postOwnerId, currentUser, onDelete, onEdit}) {
   
   const isOwner = currentUser?._id === postOwnerId;
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
+  
+  // State สำหรับจัดการปุ่มกดขอเข้าร่วม
+  const [isApplied, setIsApplied] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // ฟังก์ชันกด "I'm Interested"
+  const handleApply = async () => {
+    if (!bandId) {
+      alert("❌ ระบบขัดข้อง: ไม่พบ ID ของวงดนตรีนี้ (อาจเป็นโพสต์เก่าก่อนอัปเดตระบบ)");
+      return;
+    }
+    
+    setIsLoading(true);
+    try {
+      // ยิง API ไปที่เส้นทางที่เราสร้างไว้ใน bandController
+      await api.post(`/bands/${bandId}/apply`);
+      setIsApplied(true); // เปลี่ยนสถานะปุ่มเป็นกดแล้ว
+      alert("✅ ส่งคำขอเข้าร่วมวงเรียบร้อยแล้ว รอลุ้นให้หัวหน้าวงกดรับนะ!");
+    } catch (err) {
+      alert("❌ เกิดข้อผิดพลาด: " + (err.response?.data?.message || err.message));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="mb-8 overflow-hidden bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl">
@@ -51,8 +77,16 @@ export default function BandFinderBlock({ postId, role, bandName, tags, author, 
         {/* ซ่อนปุ่ม I'm Interested ถ้าเป็นโพสต์ของตัวเอง */}
         {/* ========================================== */}
         {!isOwner && (
-          <button className="w-full py-3 text-lg font-black uppercase transition bg-yellow-400 border-4 border-black rounded-xl hover:bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none">
-            I'm Interested
+          <button 
+            onClick={handleApply}
+            disabled={isApplied || isLoading}
+            className={`w-full py-3 text-lg font-black uppercase transition border-4 rounded-xl flex items-center justify-center gap-2 ${
+              isApplied 
+                ? 'bg-green-400 border-green-700 text-green-900 cursor-not-allowed opacity-80' // ปุ่มหลังกดแล้ว
+                : 'bg-yellow-400 border-black hover:bg-yellow-300 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none' // ปุ่มปกติ
+            }`}
+          >
+            {isLoading ? "SENDING..." : isApplied ? <><CheckCircle size={24}/> REQUEST SENT!</> : "I'M INTERESTED"}
           </button>
         )}
       </div>
