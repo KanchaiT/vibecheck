@@ -318,10 +318,10 @@ export default function MyBand() {
             if (isCurrentUserLeader && band.pendingMembers?.length > 0) {
               return (
                 <div className="mb-8">
-                  <h2 className="text-xl font-black uppercase mb-4 border-b-4 border-yellow-400 pb-2 flex items-center gap-2 text-yellow-600">
+                  <h2 className="text-xl font-black uppercase mb-4 border-b-4 border-yellow-400 pb-2 flex items-center gap-2 text-black">
                     Pending Requests ({band.pendingMembers.length})
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-black">
                     {band.pendingMembers.map((reqUser, index) => (
                       <div key={index} className="bg-yellow-50 border-4 border-dashed border-yellow-400 rounded-xl p-4 flex items-center gap-4">
                         <div className="w-12 h-12 bg-gray-200 border-2 border-black rounded-full overflow-hidden shrink-0">
