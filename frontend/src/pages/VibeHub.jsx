@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../context/ThemeContext';
 import BandFinderBlock from '../components/BandFinderBlock';
 import KnowledgeBlock from '../components/KnowledgeBlock';
 import CreatePostModal from '../components/CreatePostModal';
@@ -16,6 +17,7 @@ export default function VibeHub() {
 
   const currentUser = useAuthStore((state) => state.user);
   console.log("ข้อมูลตัวฉันตอนนี้:", currentUser);
+  const { config } = useTheme();
 
   const fetchPosts = async () => {
     setIsLoading(true);
@@ -95,7 +97,9 @@ export default function VibeHub() {
         <select 
           value={activeFilter}
           onChange={(e) => setActiveFilter(e.target.value)}
-          className="px-4 py-3 border-4 border-black rounded-xl font-black uppercase bg-white focus:ring-4 focus:ring-yellow-400 outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer transition"
+          className={`px-4 py-3 border-4 border-black rounded-xl font-black uppercase focus:ring-4 focus:ring-yellow-400 outline-none shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] cursor-pointer transition ${
+            config.theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'
+          }`}
         >
           <option value="ALL">All Vibes</option>
           <option value="BAND">Band Finder 🎸</option>

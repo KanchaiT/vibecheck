@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Outlet, Link, NavLink, useNavigate } from 'react-router-dom'; // เพิ่ม useNavigate
 import { Menu, X } from 'lucide-react';
 import { useAuthStore } from '../store/authStore'; // 👈 นำเข้า Zustand มาเพื่อลบ Token
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function MainLayout() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -30,7 +31,7 @@ export default function MainLayout() {
       : "block w-full text-center text-xl font-black text-black bg-white border-4 border-black p-3 rounded-xl hover:bg-gray-100 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] uppercase transition";
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans">
+    <div className="min-h-screen font-sans">
       
       {/* NAVBAR */}
       <nav className="bg-black text-white p-4 shadow-md sticky top-0 z-40">
@@ -50,8 +51,9 @@ export default function MainLayout() {
             >
               LOGOUT
             </button>
+            <ThemeToggle />
           </div>
-          
+
           <button 
             className="md:hidden text-white hover:text-yellow-400 transition"
             onClick={() => setIsMobileMenuOpen(true)}
@@ -94,6 +96,7 @@ export default function MainLayout() {
           >
             LOGOUT
           </button>
+          <ThemeToggle />
         </div>
       </div>
 
