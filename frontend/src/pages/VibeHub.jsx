@@ -7,6 +7,7 @@ import CreatePostModal from '../components/CreatePostModal';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { useSearchStore } from '../store/searchStore'; // 👈 นำเข้า Zustand Store สำหรับ Search
+import BulkMediaUploader from '../components/BulkMediaUploader'; // 👈 นำเข้าไฟล์ที่เราเพิ่งสร้าง
 
 export default function VibeHub() {
   const [posts, setPosts] = useState([]);
@@ -99,6 +100,11 @@ export default function VibeHub() {
       <div className="flex items-center justify-between pb-4 mb-6 border-b-4 border-black">
         <h1 className="text-2xl md:text-3xl font-black uppercase tracking-widest">VibeHub // Feed</h1>
       </div>
+
+    {/* ========================================== */}
+    {/* 🚨 เอา BulkMediaUploader มาวางตรงนี้เลยครับ! */}
+    {/* ========================================== */}
+    <BulkMediaUploader />
 
       {/* ========================================== */}
       {/* 🚨 3. แถบ Search & Filter */}
