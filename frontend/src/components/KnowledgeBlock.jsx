@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'; // 👈 อย่าลืม import useEffect
+import React, { useState, useEffect } from 'react';
 import { Trash2, Edit, Heart, MessageCircle, Send } from 'lucide-react';
 import api from '../services/api';
+import CommentItem from './CommentItem'; // 🚨 1. นำเข้า CommentItem (Recursive Component)
 
-// รับ Props ตามปกติ
 export default function KnowledgeBlock({ postId, title, content, mediaUrl, mediaType, tags, author, postOwnerId, currentUser, onDelete, onEdit, initialLikes = [], initialComments = [] }) {
   
   const [likes, setLikes] = useState(initialLikes);
@@ -10,65 +10,92 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
   const [showComments, setShowComments] = useState(false);
   const [commentText, setCommentText] = useState("");
 
-  // ==========================================
-  // 🚨 ใส่ useEffect 2 ตัวนี้ เพื่อคอยจับตาดูว่าถ้า VibeHub ส่งข้อมูลมาใหม่ ให้รีบอัปเดตหน้าจอทันที
-  // ==========================================
   useEffect(() => {
     if (initialLikes) setLikes(initialLikes);
   }, [initialLikes]);
 
   useEffect(() => {
-    if (initialComments) setComments(initialComments);
+    // แปลงโครงสร้างคอมเมนต์ที่ได้จากหลังบ้านให้แน่ใจว่ามีฟิลด์ replies (เผื่อไว้)
+    const formattedComments = initialComments.map(c => ({ ...c, replies: c.replies || [] }));
+    setComments(formattedComments);
   }, [initialComments]);
 
   const isOwner = currentUser?._id === postOwnerId;
   const isAdmin = currentUser?.role === 'admin';
   const canDelete = isOwner || isAdmin;
   
-  // เช็คว่าเรากดไลก์โพสต์นี้ไปหรือยัง (เพื่อระบายสีหัวใจ)
   const isLiked = likes.includes(currentUser?._id);
 
-  // ฟังก์ชันกด Like
   const handleLike = async () => {
     try {
       const res = await api.put(`/posts/${postId}/like`);
-      setLikes(res.data); // อัปเดตยอดไลก์ใหม่จาก Backend
+      setLikes(res.data); 
     } catch (err) {
       console.error("Like error:", err);
     }
   };
 
-  // ฟังก์ชันส่งคอมเมนต์
+  // ฟังก์ชันส่งคอมเมนต์ (ตัวแม่สุด)
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
     try {
       const res = await api.post(`/posts/${postId}/comment`, { text: commentText });
-      setComments(res.data); // อัปเดตลิสต์คอมเมนต์ใหม่
-      setCommentText(""); // ล้างช่องพิมพ์
+      // รับค่าคอมเมนต์ใหม่มา แล้วเติมฟิลด์ replies เข้าไปเผื่อมีการตอบกลับ
+      const updatedComments = res.data.map(c => ({ ...c, replies: c.replies || [] }));
+      setComments(updatedComments);
+      setCommentText(""); 
     } catch (err) {
       console.error("Comment error:", err);
     }
   };
 
+  // ==========================================
+  // 🚨 2. ลอจิก Deep Update สำหรับการตอบกลับคอมเมนต์ (Checklist C2)
+  // ==========================================
+  const handleAddReply = (parentId, newReply) => {
+    const updateComments = (currentComments) => {
+      return currentComments.map((comment) => {
+        const currentId = comment._id || comment.id;
+
+        // 🚨 3. แก้ตรงนี้! ใส่ String() ครอบไว้ เพื่อบังคับให้มันเทียบตัวอักษรกันชัวร์ๆ
+        if (String(currentId) === String(parentId)) {
+          return { 
+            ...comment, 
+            replies: [...(comment.replies || []), newReply] 
+          };
+        } 
+        
+        if (comment.replies && comment.replies.length > 0) {
+          return { 
+            ...comment, 
+            replies: updateComments(comment.replies) 
+          };
+        }
+        return comment;
+      });
+    };
+    setComments(updateComments(comments));
+  };
+
   return (
-    <div className="mb-8 overflow-hidden bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-2xl relative">
-      <div className="flex items-center justify-between p-4 border-b-2 border-gray-200 bg-gray-50 gap-4">
-        <h3 className="text-sm font-black text-gray-500 uppercase shrink-0">Knowledge Base</h3>
+    <div className="relative mb-8 overflow-hidden bg-white border-4 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+      <div className="flex items-center justify-between gap-4 p-4 bg-gray-50 border-b-2 border-gray-200">
+        <h3 className="shrink-0 text-sm font-black text-gray-500 uppercase">Knowledge Base</h3>
         <div className="flex items-center gap-3 overflow-hidden">
-          <span className="text-sm font-bold text-gray-400 truncate">SHARED BY: {author || "UNKNOWN"}</span>
+          <span className="truncate text-sm font-bold text-gray-400">SHARED BY: {author || "UNKNOWN"}</span>
           {canDelete && (
             <div className="flex gap-2">
-              <button onClick={onEdit} className="p-2 text-white transition bg-blue-500 border-2 border-black rounded-lg hover:bg-blue-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none shrink-0"><Edit size={18} /></button>
-              <button onClick={() => onDelete(postId)} className="p-2 text-white transition bg-red-500 border-2 border-black rounded-lg hover:bg-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none shrink-0"><Trash2 size={18} /></button>
+              <button onClick={onEdit} className="shrink-0 p-2 text-white transition bg-blue-500 border-2 border-black rounded-lg hover:bg-blue-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"><Edit size={18} /></button>
+              <button onClick={() => onDelete(postId)} className="shrink-0 p-2 text-white transition bg-red-500 border-2 border-black rounded-lg hover:bg-red-600 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-y-1 active:shadow-none"><Trash2 size={18} /></button>
             </div>
           )}
         </div>
       </div>
       
       {mediaUrl && mediaType === 'video' && (
-        <div className="w-full border-b-4 border-black bg-black">
-          <video controls className="w-full max-h-96 object-contain">
+        <div className="w-full bg-black border-b-4 border-black">
+          <video controls className="object-contain w-full max-h-96">
             <source src={mediaUrl} type="video/mp4" />
           </video>
         </div>
@@ -76,12 +103,12 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
 
       {mediaUrl && mediaType === 'image' && (
         <div className="w-full h-64 border-b-4 border-black">
-          <img src={mediaUrl} alt={title} className="w-full h-full object-cover" />
+          <img src={mediaUrl} alt={title} className="object-cover w-full h-full" />
         </div>
       )}
 
       <div className="p-5">
-        <h2 className="mb-3 text-2xl font-black uppercase text-black">{title}</h2>
+        <h2 className="mb-3 text-2xl font-black text-black uppercase">{title}</h2>
         <p className="mb-6 font-bold text-gray-700 whitespace-pre-wrap">{content}</p>
         
         <div className="flex flex-wrap gap-2 mb-6">
@@ -90,9 +117,6 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
           ))}
         </div>
 
-        {/* ========================================== */}
-        {/* แถบ Like & Comment */}
-        {/* ========================================== */}
         <div className="flex items-center gap-6 pt-4 border-t-2 border-gray-200">
           <button onClick={handleLike} className="flex items-center gap-2 font-black transition hover:scale-105 active:scale-95">
             <Heart size={24} className={isLiked ? "fill-red-500 text-red-500" : "text-black"} />
@@ -106,37 +130,36 @@ export default function KnowledgeBlock({ postId, title, content, mediaUrl, media
         </div>
 
         {/* ========================================== */}
-        {/* พื้นที่แสดงคอมเมนต์ (โชว์เมื่อกดปุ่ม) */}
+        {/* พื้นที่แสดงคอมเมนต์ */}
         {/* ========================================== */}
         {showComments && (
-          <div className="mt-4 pt-4 border-t-2 border-dashed border-gray-300 animate-in slide-in-from-top-2">
+          <div className="pt-4 mt-4 border-t-2 border-gray-300 border-dashed animate-in slide-in-from-top-2">
             
-            {/* รายการคอมเมนต์ */}
-            <div className="space-y-4 mb-4 max-h-60 overflow-y-auto pr-2">
+            {/* 🚨 3. ส่งข้อมูลคอมเมนต์ให้ Component ลูกที่เรียกตัวเองซ้ำได้ (Checklist C1) */}
+            <div className="pr-2 mb-4 overflow-y-auto space-y-4 max-h-96">
               {comments.length === 0 ? (
-                <p className="text-sm font-bold text-gray-400 text-center">ยังไม่มีคอมเมนต์ เป็นคนแรกเลยสิ!</p>
+                <p className="text-sm font-bold text-center text-gray-400">ยังไม่มีคอมเมนต์ เป็นคนแรกเลยสิ!</p>
               ) : (
-                comments.map((comment, idx) => (
-                  <div key={idx} className="bg-gray-100 p-3 rounded-xl border-2 border-black relative">
-                    <span className="font-black text-sm uppercase text-yellow-600 block mb-1">
-                      {comment.user?.displayName || comment.user?.username || "Unknown"}
-                    </span>
-                    <p className="font-bold text-gray-800 text-sm">{comment.text}</p>
-                  </div>
+                comments.map((comment) => (
+                  <CommentItem 
+                    key={comment._id || comment.id} // ดักจับทั้ง id จาก DB และ id ชั่วคราว
+                    comment={comment}
+                    onAddReply={handleAddReply} // ส่งฟังก์ชัน Deep Update ไปให้ตัวลูก
+                  />
                 ))
               )}
             </div>
 
-            {/* ช่องพิมพ์คอมเมนต์ */}
-            <form onSubmit={handleCommentSubmit} className="flex gap-2 relative">
+            {/* ช่องพิมพ์คอมเมนต์ระดับบนสุด (Root) */}
+            <form onSubmit={handleCommentSubmit} className="relative flex gap-2">
               <input 
                 type="text" 
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="เขียนความเห็น..." 
-                className="flex-1 px-4 py-2 border-2 border-black rounded-xl font-bold focus:ring-4 focus:ring-yellow-400 outline-none"
+                className="flex-1 px-4 py-2 font-bold border-2 border-black outline-none rounded-xl focus:ring-4 focus:ring-yellow-400"
               />
-              <button type="submit" disabled={!commentText.trim()} className="bg-black text-white px-4 py-2 rounded-xl border-2 border-black font-black uppercase hover:bg-gray-800 active:translate-y-1 disabled:opacity-50 transition">
+              <button type="submit" disabled={!commentText.trim()} className="px-4 py-2 font-black text-white uppercase transition bg-black border-2 border-black rounded-xl hover:bg-gray-800 active:translate-y-1 disabled:opacity-50">
                 <Send size={18} />
               </button>
             </form>
