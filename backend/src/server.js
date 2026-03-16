@@ -85,12 +85,16 @@ const authRoutes = require('./routes/authRoutes');
 const postRoutes = require('./routes/postRoutes');
 const userRoutes = require('./routes/userRoutes');
 const bandRoutes = require('./routes/bandRoutes');
+const orderRoutes = require('./routes/orderRoutes');
+const productRoutes = require('./routes/productRoutes');
 
 // ================= ROUTES =================
 app.use('/api/auth', authRoutes); 
 app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/bands', bandRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/products', productRoutes);
 
 // ==========================================
 // 🎯 Function 3.2 - VibeCheck Health Monitoring
