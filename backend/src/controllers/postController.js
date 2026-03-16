@@ -2,6 +2,60 @@
 const BandPost = require('../models/BandPost');
 const Band = require('../models/Band');
 
+// ==========================================
+// 🎯 Function 4.4 - Multi-Tag Search & Pagination
+// ==========================================
+// @desc    ค้นหาโพสต์ด้วยแท็ก และแบ่งหน้า (Pagination)
+// @route   GET /api/posts/search
+const searchPosts = async (req, res) => {
+  try {
+    const { tags, page = 1, limit = 5 } = req.query;
+
+    // ค้นหาเฉพาะโพสต์ที่ยังไม่ถูกลบ
+    let query = { isDeleted: false };
+
+    // 🚨 C2: Array Parsing (แปลง String เป็น Array)
+    if (tags) {
+      const tagsArray = tags.split(',').map(tag => tag.trim());
+      // 🚨 C1: Exact Tag Matching (บังคับต้องมีแท็กครบทุกตัว)
+      query.tags = { $all: tagsArray };
+    }
+
+    // 🚨 C3: Skip & Limit Logic
+    const pageNum = parseInt(page, 10);
+    const limitNum = parseInt(limit, 10);
+    const skipAmount = (pageNum - 1) * limitNum;
+
+    const posts = await BandPost.find(query)
+      .populate('user', 'username displayName')
+      .populate('comments.user', 'username displayName')
+      .skip(skipAmount)
+      .limit(limitNum)
+      .sort({ createdAt: -1 });
+
+    // 🚨 C4: Pagination Metadata
+    const totalPosts = await BandPost.countDocuments(query);
+    const totalPages = Math.ceil(totalPosts / limitNum); // ปัดเศษขึ้นเสมอ
+
+    // 🚨 C5: Empty Result Handling (ถ้าหาไม่เจอจะส่ง 200 OK พร้อม data เป็น Array ว่าง [])
+    res.status(200).json({
+      data: posts,
+      metadata: {
+        totalPosts,
+        totalPages,
+        currentPage: pageNum,
+        limit: limitNum
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ==========================================
+// โค้ด VibeCheck เดิมของคุณ
+// ==========================================
+
 // @desc    ดึงข้อมูลโพสต์หาเพื่อนร่วมวงทั้งหมด (ที่ไม่ถูก Soft Delete)
 // @route   GET /api/posts
 // @access  Private
@@ -16,10 +70,10 @@ const getPosts = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 // @desc    สร้างโพสต์
 // @route   POST /api/posts
 // @access  Private
-// ในฟังก์ชัน createPost...
 const createPost = async (req, res) => {
   try {
 
@@ -47,12 +101,12 @@ const createPost = async (req, res) => {
       bandName,
       title,
       content,
-      mediaUrl: mediaUrl,   // 👈 เช็คตรงนี้! ลืมใส่ 2 บรรทัดนี้หรือเปล่าครับ?
-      mediaType: mediaType, // 👈 เช็คตรงนี้!
+      mediaUrl: mediaUrl,   
+      mediaType: mediaType, 
       tags: parsedTags
     });
 
-   if (postType === 'BandFinder' && bandName) {
+    if (postType === 'BandFinder' && bandName) {
       // 1. ลองหาดูก่อน
       let currentBand = await Band.findOne({ 
         name: bandName, 
@@ -132,19 +186,14 @@ const deletePost = async (req, res) => {
   try {
     const post = await BandPost.findById(req.params.id);
 
-    // เช็คว่ามีโพสต์นี้ไหม
     if (!post) {
       return res.status(404).json({ message: 'ไม่พบโพสต์นี้' });
     }
 
-    // ==========================================
-    // ตรวจสอบสิทธิ์: ต้องเป็น "เจ้าของโพสต์" หรือ "Admin" เท่านั้น
-    // ==========================================
     if (post.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       return res.status(403).json({ message: 'คุณไม่มีสิทธิ์ลบโพสต์นี้' });
     }
 
-    // Function 4.2: ทำ Soft Delete (เปลี่ยนสถานะ ไม่ได้ลบจริง)
     post.isDeleted = true;
     await post.save();
 
@@ -161,12 +210,11 @@ const toggleLike = async (req, res) => {
     const post = await BandPost.findById(req.params.id);
     if (!post) return res.status(404).json({ message: 'ไม่พบโพสต์' });
 
-    // เช็คว่าเคยไลก์หรือยัง
     const index = post.likes.indexOf(req.user._id);
     if (index === -1) {
-      post.likes.push(req.user._id); // ยังไม่เคยไลก์ -> กดไลก์
+      post.likes.push(req.user._id); 
     } else {
-      post.likes.splice(index, 1); // เคยไลก์แล้ว -> ยกเลิกไลก์ (Unlike)
+      post.likes.splice(index, 1); 
     }
 
     await post.save();
@@ -187,7 +235,6 @@ const addComment = async (req, res) => {
     post.comments.push(newComment);
     
     await post.save();
-    // ดึงข้อมูลชื่อคนคอมเมนต์กลับไปให้หน้าบ้านด้วย
     await post.populate('comments.user', 'username displayName');
     
     res.json(post.comments);
@@ -196,4 +243,5 @@ const addComment = async (req, res) => {
   }
 };
 
-module.exports = { getPosts, createPost, deletePost, updatePost, toggleLike, addComment };
+// 🚨 อย่าลืม Export searchPosts ออกไปด้วย!
+module.exports = { searchPosts, getPosts, createPost, deletePost, updatePost, toggleLike, addComment };

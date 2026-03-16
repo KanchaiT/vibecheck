@@ -1,8 +1,60 @@
-// backend/src/controllers/productController.js
 const Product = require('../models/Product');
 
-// @desc    ดึงข้อมูลสินค้าทั้งหมด
-// @route   GET /api/products
+// ==========================================
+// 🎯 Function 4.5 - Aggregation Report
+// ==========================================
+const getProductStats = async (req, res) => {
+  try {
+    const stats = await Product.aggregate([
+      {
+        $project: {
+          category: 1,
+          salePriceCalc: {
+            $multiply: [
+              "$originalPrice",
+              { $divide: [{ $subtract: [100, "$discountPercent"] }, 100] }
+            ]
+          }
+        }
+      },
+      {
+        $facet: {
+          overallStats: [
+            {
+              $group: {
+                _id: null,
+                avgSalePrice: { $avg: "$salePriceCalc" },
+                maxSalePrice: { $max: "$salePriceCalc" }
+              }
+            }
+          ],
+          categoryStats: [
+            {
+              $group: {
+                _id: "$category",
+                totalByCategory: { $sum: 1 }
+              }
+            }
+          ]
+        }
+      }
+    ]);
+
+    if (!stats[0].overallStats.length) {
+      return res.status(200).json(null);
+    }
+
+    res.status(200).json({
+      maxSalePrice: stats[0].overallStats[0].maxSalePrice,
+      avgSalePrice: stats[0].overallStats[0].avgSalePrice,
+      categoryCounts: stats[0].categoryStats
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({});
@@ -12,8 +64,6 @@ const getProducts = async (req, res) => {
   }
 };
 
-// @desc    ดึงข้อมูลสินค้าตาม ID (เอาไว้ดูสต็อกรายชิ้น)
-// @route   GET /api/products/:id
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -26,26 +76,17 @@ const getProductById = async (req, res) => {
   }
 };
 
-// @desc    สร้างสินค้าใหม่เข้าคลัง
-// @route   POST /api/products
 const createProduct = async (req, res) => {
   try {
-    const { name, price, stock } = req.body;
-    
+    const { name, category, originalPrice, discountPercent, stock } = req.body;
     const newProduct = await Product.create({
-      name,
-      price,
-      stock
+      name, category, originalPrice, discountPercent, stock
     });
-
-    res.status(201).json({
-      message: 'เพิ่มสินค้าเข้าคลังเรียบร้อย!',
-      product: newProduct
-    });
+    res.status(201).json(newProduct);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 };
 
-// ส่งออกแบบ CommonJS
-module.exports = { getProducts, getProductById, createProduct };
+// 🚨 ส่งออกให้ครบทั้ง 4 ฟังก์ชัน
+module.exports = { getProductStats, getProducts, getProductById, createProduct };

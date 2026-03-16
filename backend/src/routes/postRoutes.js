@@ -1,22 +1,24 @@
+// backend/src/routes/postRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getPosts, createPost, deletePost, updatePost, toggleLike, addComment } = require('../controllers/postController');
-const { protect } = require('../middlewares/authMiddleware');
+const { searchPosts, getPosts, createPost, updatePost, deletePost, toggleLike, addComment } = require('../controllers/postController');
 
-// 🚨 นำเข้าตัวอัปโหลด
-const upload = require('../config/cloudinary'); 
+// สมมติว่าคุณมี authMiddleware (ถ้าไม่มี หรือไฟล์ชื่ออื่น ให้แก้ Path ด้วยนะครับ)
+const { protect } = require('../middlewares/authMiddleware'); 
 
-// 🚨 จุดสำคัญ 1: ตรง .post() ต้องมี upload.single('mediaFile') แทรกอยู่
+// 🚨 Function 4.4 (ไม่ต้องใช้ protect เพื่อให้เทส Postman ง่ายๆ)
+router.get('/search', searchPosts);
+
+// เส้นทางอื่นๆ (เอา upload.single ออกไปก่อน)
 router.route('/')
   .get(protect, getPosts)
-  .post(protect, upload.single('mediaFile'), createPost);
+  .post(protect, createPost); // 👈 แก้ตรงนี้
 
-// 🚨 จุดสำคัญ 2: ตรง .put() ก็ต้องมี upload.single('mediaFile') แทรกอยู่เหมือนกัน
 router.route('/:id')
-  .delete(protect, deletePost)
-  .put(protect, upload.single('mediaFile'), updatePost);
+  .put(protect, updatePost) // 👈 แก้ตรงนี้
+  .delete(protect, deletePost);
 
-router.route('/:id/like').put(protect, toggleLike);
-router.route('/:id/comment').post(protect, addComment);
+router.put('/:id/like', protect, toggleLike);
+router.post('/:id/comment', protect, addComment);
 
 module.exports = router;
