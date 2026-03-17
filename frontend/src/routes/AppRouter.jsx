@@ -8,6 +8,10 @@ import VibeHub from '../pages/VibeHub';
 import ArtistProfile from '../pages/ArtistProfile';
 import MyBand from '../pages/MyBand';
 import GearBudgetScreen from '../pages/GearBudgetScreen';
+import MusicLibrary from '../pages/MusicLibrary';
+import BookDetail from '../pages/BookDetail';
+import VibeDashboard from '../pages/VibeDashboard';
+import OfflineTaskManager from '../pages/OfflineTaskManager'; // 🚨 นำเข้า Calculator Page
 
 export const router = createBrowserRouter([
   {
@@ -25,6 +29,22 @@ export const router = createBrowserRouter([
   {
     path: "/gear-budget",
     element: <GearBudgetScreen />,
+  },
+  {
+    path: "/library",
+    element: <MusicLibrary />,
+  },
+  {
+    path: "/library/detail",
+    element: <BookDetail />,
+  },
+  {
+    path: "/dashboard",
+    element: <VibeDashboard />,
+  },
+  {
+    path: "/tasks",
+    element: <OfflineTaskManager />,
   },
   {
     element: <ProtectedRoute />, 
