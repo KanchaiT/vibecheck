@@ -7,6 +7,12 @@ import Register from '../pages/Register';
 import VibeHub from '../pages/VibeHub';
 import ArtistProfile from '../pages/ArtistProfile';
 import MyBand from '../pages/MyBand';
+import ProductExplorer from '../pages/ProductExplorer';
+import MultiStepForm from '../pages/MultiStepForm';
+import InventoryManager from '../pages/InventoryManager';
+import FeedbackPage from '../pages/FeedbackPage'; // 🚨 1. นำเข้า FeedbackPage ตรงนี้
+import DynamicFormEngine from '../pages/DynamicFormEngine';
+// ==========================================
 
 export const router = createBrowserRouter([
   {
@@ -20,6 +26,22 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />, 
+  },
+  {
+    path: "/products", // 👈 เข้าผ่าน /products
+    element: <ProductExplorer />,
+  },
+  {
+    path: "/register-advanced", // สร้าง URL ใหม่สำหรับเทสข้อนี้โดยเฉพาะ
+    element: <MultiStepForm />,
+  },
+  {
+    path: "/inventory",
+    element: <InventoryManager />,
+  },
+  {
+    path: "/dynamic-form",
+    element: <DynamicFormEngine />,
   },
   {
     // 👈 เอา ProtectedRoute มาครอบกลุ่มที่มี MainLayout ไว้
@@ -36,9 +58,6 @@ export const router = createBrowserRouter([
             path: "/profile",
             element: <ArtistProfile />,
           },
-          // ==========================================
-          // 🚨 เติมเส้นทางนี้เข้าไป เพื่อให้ดูโปรไฟล์คนอื่นได้!
-          // ==========================================
           {
             path: "/profile/:id",
             element: <ArtistProfile />,
@@ -46,7 +65,14 @@ export const router = createBrowserRouter([
           {
             path: "/myband",
             element: <MyBand />,
-          }
+          },
+          // ==========================================
+          // 🚨 2. เติมเส้นทาง /feedback เข้าไปตรงนี้ครับ!
+          // ==========================================
+          {
+            path: "/feedback",
+            element: <FeedbackPage />,
+          },
         ]
       }
     ]

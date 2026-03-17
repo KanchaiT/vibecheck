@@ -5,7 +5,7 @@ const { protect } = require('../middlewares/authMiddleware');
 const { registerUser, loginUser, getUserProfile, updatePassword, logoutUser, loginLimiter } = require('../controllers/authController');
 
 router.post('/register', registerUser);
-router.post('/login', loginLimiter, loginUser);
+router.post('/login', loginUser);
 router.get('/users/:id', getUserProfile);
 router.put('/updateMyPassword', protect, updatePassword);
 router.post('/logout', protect, logoutUser);
