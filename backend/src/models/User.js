@@ -18,15 +18,17 @@ const userSchema = new mongoose.Schema({
   password: { 
     type: String, 
     required: [true, 'กรุณากรอกรหัสผ่าน'],
-    minlength: 6 
+    minlength: 6,
+    select: false // ไม่ดึงรหัสผ่านมาโดยอัตโนมัติ (ต้องใช้ .select('+password') ถึงจะดึงมาเช็คได้)
   },
+  passwordChangedAt: Date,
   majorInstrument: { 
     type: String, 
     required: [true, 'กรุณาระบุเครื่องดนตรีหลัก']
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'editor', 'manager', 'admin'],
     default: 'user'
   },
   displayName: { type: String },
@@ -61,9 +63,19 @@ userSchema.pre('save', async function() {
   this.password = await bcrypt.hash(this.password, salt);
 });
 
-// ฟังก์ชันเทียบรหัสผ่านตอน Login
+// 🚨 C2: สร้าง Instance Method เพื่อเปรียบเทียบรหัสผ่าน
 userSchema.methods.matchPassword = async function(enteredPassword) {
+  const bcrypt = require('bcrypt'); // เผื่อลืม import ไว้ด้านบน
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    // 🚨 C3: ป้องกันปัญหาหน่วยเวลาไม่เท่ากัน (แปลง Milliseconds ของ DB เป็น Seconds ของ JWT)
+    const changedTimestamp = parseInt(this.passwordChangedAt.getTime() / 1000, 10);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false; // แปลว่าไม่เคยเปลี่ยนรหัสผ่าน (รหัสผ่านเดิมตั้งแต่สมัคร)
 };
 
 module.exports = mongoose.model('User', userSchema);

@@ -21,7 +21,7 @@ router.post('/:bandId/apply', protect, applyToBand); // คนนอกกดข
 router.put('/:bandId/accept/:userId', protect, acceptMember); // หัวหน้ากดรับ
 router.put('/:bandId/reject/:userId', protect, rejectMember); // หัวหน้ากดปัดตก
 
-router.post('/', createBand);
-router.get('/', getBands);
+router.post('/', protect, createBand);
+router.get('/', protect, getBands);
 
 module.exports = router;
