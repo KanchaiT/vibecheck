@@ -1,12 +1,13 @@
 import { createBrowserRouter } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
-import ProtectedRoute from './ProtectedRoute'; // 👈 นำเข้าด่านตรวจของเรา
+import ProtectedRoute from './ProtectedRoute'; 
 import StartPage from '../pages/StartPage';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import VibeHub from '../pages/VibeHub';
 import ArtistProfile from '../pages/ArtistProfile';
 import MyBand from '../pages/MyBand';
+import GearBudgetScreen from '../pages/GearBudgetScreen';
 
 export const router = createBrowserRouter([
   {
@@ -22,7 +23,10 @@ export const router = createBrowserRouter([
     element: <Register />, 
   },
   {
-    // 👈 เอา ProtectedRoute มาครอบกลุ่มที่มี MainLayout ไว้
+    path: "/gear-budget",
+    element: <GearBudgetScreen />,
+  },
+  {
     element: <ProtectedRoute />, 
     children: [
       {
@@ -36,9 +40,6 @@ export const router = createBrowserRouter([
             path: "/profile",
             element: <ArtistProfile />,
           },
-          // ==========================================
-          // 🚨 เติมเส้นทางนี้เข้าไป เพื่อให้ดูโปรไฟล์คนอื่นได้!
-          // ==========================================
           {
             path: "/profile/:id",
             element: <ArtistProfile />,
@@ -46,7 +47,10 @@ export const router = createBrowserRouter([
           {
             path: "/myband",
             element: <MyBand />,
-          }
+          },
+          // ==========================================
+          // 🚨 2. เติมเส้นทางหน้าเครื่องคิดเลขเข้าไปตรงนี้ครับ!
+          // ==========================================
         ]
       }
     ]
