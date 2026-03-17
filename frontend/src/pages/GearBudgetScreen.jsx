@@ -55,12 +55,20 @@ export default function GearBudgetScreen() {
             ตั้งงบประมาณ (Thai Baht - THB)
           </p>
           <input
-            type="number" // 🎯 C4: บังคับแป้นตัวเลขบนมือถือ [cite: 351-354]
-            className="w-full bg-transparent text-5xl sm:text-6xl font-bold text-white border-b-2 border-slate-500/50 focus:border-blue-400 outline-none py-3 placeholder-slate-600 transition-colors"
-            placeholder="0.00"
-            value={thb}
-            onChange={(e) => setThb(e.target.value)}
-          />
+  type="text" // 💡 ทริค: เปลี่ยนเป็น text เพื่อซ่อนลูกศรขึ้นลง (Spinner) บนจอคอม
+  inputMode="decimal" // 🚨 พระเอกของเรา! บังคับให้มือถือโชว์ "แป้นตัวเลข + จุดทศนิยม"
+  pattern="[0-9]*" // 🛡️ ดักเผื่อ iOS รุ่นเก่าๆ ให้โชว์แป้นตัวเลข
+  className="w-full bg-transparent text-5xl sm:text-6xl font-bold text-white border-b-2 border-slate-500/50 focus:border-blue-400 outline-none py-3 placeholder-slate-600 transition-colors"
+  placeholder="0.00"
+  value={thb}
+  onChange={(e) => {
+    // ดักให้พิมพ์ได้แค่ตัวเลขและจุดทศนิยม
+    const val = e.target.value;
+    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+      setThb(val);
+    }
+  }}
+/>
         </div>
 
         {/* 🎯 C3: เรียกใช้ Component แบบไม่ซ้ำ [cite: 346-348] */}
